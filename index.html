@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Cost Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .font-orbitron { font-family: 'Orbitron', monospace; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Glow effects */
+        .glow-green {
+            text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 40px #00ff8855;
+        }
+        .glow-cyan {
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #00ffff55;
+        }
+        .glow-orange {
+            text-shadow: 0 0 10px #ff6600, 0 0 20px #ff6600, 0 0 40px #ff660055;
+        }
+        
+        /* Input styling */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* Button pulse animation */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px #00ff88, 0 0 10px #00ff8855; }
+            50% { box-shadow: 0 0 15px #00ff88, 0 0 30px #00ff8855; }
+        }
+        .btn-pulse:hover {
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+        
+        /* Scanning line effect */
+        .scanner {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            animation: scan 3s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { top: 100%; opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 min-h-screen flex items-center justify-center">
+    
+    <div class="scanner bg-gray-900 border border-gray-700 rounded-2xl p-10 w-[520px] shadow-2xl">
+        
+        <!-- Header -->
+        <h1 class="font-orbitron text-2xl text-center text-gray-300 mb-8 tracking-widest">
+            MEETING COST TIMER
+        </h1>
+        
+        <!-- Input Section -->
+        <div id="inputSection" class="space-y-6">
+            
+            <!-- Attendees -->
+            <div class="flex items-center justify-between">
+                <label class="text-gray-400 font-mono text-sm tracking-wide">開會人數</label>
+                <input 
+                    type="number" 
+                    id="attendees" 
+                    value="1" 
+                    min="1"
+                    class="bg-gray-800 border border-gray-600 text-cyan-400 font-mono text-xl text-right 
+                           w-32 px-4 py-2 rounded-lg focus:outline-none focus:border-cyan-500 
+                           focus:ring-1 focus:ring-cyan-500 transition-all"
+                >
+            </div>
+            
+            <!-- Hourly Rate -->
+            <div class="flex items-center justify-between">
+                <label class="text-gray-400 font-mono text-sm tracking-wide">平均時薪 (NT$)</label>
+                <input 
+                    type="number" 
+                    id="hourlyRate" 
+                    value="1000" 
+                    min="1"
+                    class="bg-gray-800 border border-gray-600 text-cyan-400 font-mono text-xl text-right 
+                           w-32 px-4 py-2 rounded-lg focus:outline-none focus:border-cyan-500 
+                           focus:ring-1 focus:ring-cyan-500 transition-all"
+                >
+            </div>
+            
+            <!-- Start Button -->
+            <button 
+                id="startBtn"
+                onclick="startTimer()"
+                class="btn-pulse w-full mt-6 py-4 bg-transparent border-2 border-emerald-500 text-emerald-400 
+                       font-orbitron text-lg tracking-widest rounded-xl
+                       hover:bg-emerald-500 hover:text-gray-900 
+                       active:scale-95 transition-all duration-200"
+            >
+                ▶ START
+            </button>
+        </div>
+        
+        <!-- Timer Section (Hidden Initially) -->
+        <div id="timerSection" class="hidden text-center">
+            
+            <!-- Cost Display -->
+            <div class="mb-6">
+                <div class="text-gray-500 font-mono text-sm mb-2 tracking-widest">累積成本</div>
+                <div class="font-orbitron text-6xl text-emerald-400 glow-green tracking-wider">
+                    NT$ <span id="costDisplay">0.00</span>
+                </div>
+            </div>
+            
+            <!-- Divider -->
+            <div class="border-t border-gray-700 my-6"></div>
+            
+            <!-- Time Display -->
+            <div class="mb-8">
+                <div class="text-gray-500 font-mono text-sm mb-2 tracking-widest">經過時間</div>
+                <div class="font-mono text-3xl text-cyan-400 glow-cyan tracking-widest">
+                    <span id="timeDisplay">00:00:00</span>
+                </div>
+            </div>
+            
+            <!-- Rate Info -->
+            <div class="text-gray-600 font-mono text-xs mb-6">
+                <span id="rateInfo"></span>
+            </div>
+            
+            <!-- Stop Button -->
+            <button 
+                id="stopBtn"
+                onclick="stopTimer()"
+                class="w-full py-4 bg-transparent border-2 border-red-500 text-red-400 
+                       font-orbitron text-lg tracking-widest rounded-xl
+                       hover:bg-red-500 hover:text-gray-900 
+                       active:scale-95 transition-all duration-200"
+            >
+                ■ STOP & RESET
+            </button>
+        </div>
+        
+    </div>
+
+    <script>
+        let timerInterval = null;
+        let startTime = null;
+        let attendees = 1;
+        let hourlyRate = 1000;
+
+        function formatNumber(num) {
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return [
+                hrs.toString().padStart(2, '0'),
+                mins.toString().padStart(2, '0'),
+                secs.toString().padStart(2, '0')
+            ].join(':');
+        }
+
+        function calculateCost(elapsedSeconds) {
+            // (人數 * 時薪 / 3600) * 經過秒數
+            const costPerSecond = (attendees * hourlyRate) / 3600;
+            return costPerSecond * elapsedSeconds;
+        }
+
+        function updateDisplay() {
+            const now = Date.now();
+            const elapsedMs = now - startTime;
+            const elapsedSeconds = elapsedMs / 1000;
+            
+            const cost = calculateCost(elapsedSeconds);
+            
+            document.getElementById('costDisplay').textContent = formatNumber(cost);
+            document.getElementById('timeDisplay').textContent = formatTime(elapsedSeconds);
+        }
+
+        function startTimer() {
+            // Get input values
+            attendees = parseInt(document.getElementById('attendees').value) || 1;
+            hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 1000;
+            
+            // Validate
+            if (attendees < 1) attendees = 1;
+            if (hourlyRate < 1) hourlyRate = 1;
+            
+            // Update rate info
+            const costPerMinute = (attendees * hourlyRate) / 60;
+            document.getElementById('rateInfo').textContent = 
+                `${attendees} 人 × NT$${formatNumber(hourlyRate)}/hr = NT$${formatNumber(costPerMinute)}/min`;
+            
+            // Switch UI
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('timerSection').classList.remove('hidden');
+            
+            // Start timer
+            startTime = Date.now();
+            document.getElementById('costDisplay').textContent = '0.00';
+            document.getElementById('timeDisplay').textContent = '00:00:00';
+            
+            // Update every 100ms for smooth animation
+            timerInterval = setInterval(updateDisplay, 100);
+        }
+
+        function stopTimer() {
+            // Stop interval
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Switch UI back
+            document.getElementById('timerSection').classList.add('hidden');
+            document.getElementById('inputSection').classList.remove('hidden');
+        }
+    </script>
+    
+</body>
+</html>

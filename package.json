@@ -1,0 +1,8 @@
+{
+  "name": "meeting-cost-timer",
+  "version": "1.0.0",
+  "description": "會議成本計時器 - Meeting Cost Timer",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
